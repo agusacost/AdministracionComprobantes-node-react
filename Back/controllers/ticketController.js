@@ -1,7 +1,8 @@
 const Ticket = require('../models/Ticket.js');
 const Contador = require('../models/Contador.js');
 
-//agrega un ticket
+//incrementa el contador para asignarlo al ticket
+//no se exporta porque se usa unicamente en ticketController
 async function obtenerSeguimientoActual(){
     let contador = await Contador.findOne();
     if(!contador){
@@ -12,7 +13,9 @@ async function obtenerSeguimientoActual(){
 
 }
 
-exports.nuevoTicket = async (req,res,next)=>{
+//Agrega un nuevo ticket
+//obtien datos desde un formulario
+exports.nuevoTicket = async (req,res)=>{
     try {
         const {nombre,apellido,colegio,dni,date,serie,observaciones}=req.body;
         const contador = await obtenerSeguimientoActual();
@@ -29,66 +32,66 @@ exports.nuevoTicket = async (req,res,next)=>{
             listo: false,
             user: req.user.id
         });
-        //almacenar
+        //almacena en bd
         await ticket.save();
+        //actualiza contador y almacena en bd
         contador.numeroSeguimientoActual +=1;
         await contador.save();
-        res.json({mensaje: 'se agrego nuevo ticket'});
+        res.status(200).json({status:'succes',mensaje: 'se agrego nuevo ticket'});
     } catch (error) {
-        //si hay error next
-        console.log(error);
-        next();
+        return res.status(400).json({status:'error', mensaje: error})
     }
 }
 
-//muestra los tickets
-exports.mostrarTicket = async(req,res,next)=>{
+//Extrae los datos de la bd
+exports.mostrarTicket = async(req,res)=>{
     try {
         const ticket = await Ticket.find({}).populate('user','user');
-        res.json(ticket);
+        res.status(200).json(ticket);
     } catch (error) {
-        console.log(error);
-        next();
+        return res.status(404).json({status: 'error', mensaje: 'Error en la busqueda'});
     }
 }
 
-exports.mostrarTicketId = async(req,res,next) =>{
+//Extrae datos de un ticket por su id
+//Obtiene el id por url
+exports.mostrarTicketId = async(req,res) =>{
     const ticket = await Ticket.findById(req.params.idTicket);
     try {
-        res.json(ticket);
+        res.status(200).json(ticket);
     } catch (error) {
-        res.json({mensaje: 'No se encuentra el ticket'});
-        next();
+        return res.status(404).json({status: 'error', mensaje: 'Error en la busqueda'});
     }
 }
 
 //actualizar ticket
+//recibe el id por parametro
+//new:true devuelve el ticket actualizadp
 exports.actualizarTicket = async(req,res,next) =>{
     try {
         const ticket = await Ticket.findOneAndUpdate({_id : req.params.idTicket},req.body,{
             new:true
         });
-        res.json(ticket);
+        res.status(200).json(ticket);
     } catch (error) {
-        res.send(error);
-        next();
+        return res.status(404).json({status: 'error', mensaje: 'Error al actualizar'});
     }
 }
 
 //eliminar ticket
-exports.eliminarTicket = async(req,res,next) =>{
+//lo elimina por id que recibe como parametro
+exports.eliminarTicket = async(req,res) =>{
     try {
         const ticket = await Ticket.findByIdAndDelete({_id: req.params.idTicket});
         if(!ticket) return res.status(404).json({mensaje: 'Ticket no encontrado'})
         return res.sendStatus(204);
     } catch (error) {
         return res.status(404).json({mensaje: 'Ticket no encontrado'})
-        next();
     }
 }
 
-//buscar ticket por serie
-
+//buscar ticket por dni
+//busca por formulario
 exports.buscarTicketDni = async(req,res)=>{
     try {
         const {dni} = req.body;
@@ -101,6 +104,8 @@ exports.buscarTicketDni = async(req,res)=>{
     }
 }
 
+//buscar ticket por serie
+//busca por formulario
 exports.buscartTicketSerie = async(req,res) =>{
     try {
         const {serie} = req.body;
@@ -113,6 +118,8 @@ exports.buscartTicketSerie = async(req,res) =>{
     }
 }
 
+//buscar ticket por num de servicio
+//busca por formulario
 exports.buscarTicketServicio = async(req,res)=>{
     try {
         const {seguimiento} = req.body;
