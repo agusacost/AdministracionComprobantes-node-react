@@ -21,6 +21,7 @@ exports.nuevoUser = async(req,res,next)=>{
 
         const userSaved = await newUser.save();
 
+        //genera y devuelve el token
         jwt.sign(
             {
             id: userSaved._id,
@@ -38,12 +39,13 @@ exports.nuevoUser = async(req,res,next)=>{
             }
         )
     } catch (error) {
-        res.status(500).json({mensaje: error.mensaje})
-        next();
+        return res.status(400).json({mensaje: error.mensaje})
     }
 }
 
-exports.login = async(req,res,next)=>{
+//inicia sesion del usuario
+//genera el token para el uso dentro del sistema
+exports.login = async(req,res)=>{
     const {user,password} = req.body;
     const TOKEN_SECRET = config.TOKEN_SECRET;
     try {
@@ -54,6 +56,7 @@ exports.login = async(req,res,next)=>{
 
         if(!isMatch) return res.status(400).json(['Contraseña incorrecta']);
 
+        //genera y devuelve el token
         jwt.sign(
             {
             id: userFound._id,
@@ -72,19 +75,21 @@ exports.login = async(req,res,next)=>{
         )
         
     } catch (error) {
-        res.status(500).json({mensaje: error.mensaje})
-        next();
+        return res.status(400).json({mensaje: error.mensaje})
     }
 }
 
-//logout
-exports.logout = (req,res,next)=>{
+//Cierra la sesion
+//Deja el token empty
+exports.logout = (res)=>{
     res.cookie('token',"",{
         expires: new Date(0)
     });
     return res.sendStatus(200);
 }
 
+//devuelve los datos de usuario con sesion activa
+//no se implemento
 exports.profile = async (req,res,next)=>{
     const userFound = await User.findById(req.user.id);
 
@@ -97,6 +102,7 @@ exports.profile = async (req,res,next)=>{
 }
 
 //actualizar un usuario
+//no se implemento
 exports.actualizarUser = async(req,res,next)=>{
     try {
         const user = await User.findOneAndUpdate({_id:req.params.idUser},req.body,{
@@ -104,22 +110,22 @@ exports.actualizarUser = async(req,res,next)=>{
         });
         res.json(user);
     } catch (error) {
-        res.send(error);
-        next();
+        return res.send(error);
     }
 }
 
 //eliminar un usuario
+//no se implemento 
 exports.eliminarUser = async(req,res,next)=>{
     try {
         const user = await User.findByIdAndDelete({_id: req.params.idUser});
         res.json({mensaje: 'Usuario eliminado'});
     } catch (error) {
-        res.json({mensaje: 'No se encuentra el usuario'});
-        next();
+        return res.json({mensaje: 'No se encuentra el usuario'});
     }
 }
 
+//verifica si el token de las cookies existe y coincide
 exports.verifyToken = async(req,res,next)=>{
     const {token} = req.cookies
     const TOKEN_SECRET = config.TOKEN_SECRET;
