@@ -1,3 +1,4 @@
+//rutas tickets
 import axios from "./axios.js";
 
 export const getTicketsRequest = () => axios.get("/tickets");
