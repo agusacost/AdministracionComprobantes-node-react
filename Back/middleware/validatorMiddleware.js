@@ -1,4 +1,4 @@
-
+//valida el schema con el cuerpo de la solicitud
 exports.validateSchema = (schema)=>(req,res,next)=>{
     try {
         schema.parse(req.body);
